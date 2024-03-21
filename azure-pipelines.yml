@@ -1,0 +1,43 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'YourServiceConnectionName'
+  resourceGroupName: 'myResourceGroup'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildApp
+    steps:
+    - script: |
+        echo "Building the application..."
+        # Add your build commands here, for example, npm install and npm build for a Node.js app.
+
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+  - job: DeployInfrastructure
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az deployment group create --resource-group $(resourceGroupName) --template-file ./infrastructure/main.bicep --parameters ./infrastructure/parameters.json
+
+  - job: DeployApp
+    dependsOn: DeployInfrastructure
+    steps:
+    - script: |
+        echo "Deploying the application..."
+        # Add your deployment commands here. This could be FTP upload, Azure Web App deployment, etc.
